@@ -253,16 +253,17 @@ def build_model(
     g_src_to_dst_model = model.__dict__[g_model_arch_name]()
     g_dst_to_src_model = model.__dict__[g_model_arch_name]()
 
+    d_src_model = d_src_model.to(device).float()
+    d_dst_model = d_dst_model.to(device).float()
+    g_src_to_dst_model = g_src_to_dst_model.to(device).float()
+    g_dst_to_src_model = g_dst_to_src_model.to(device).float()
+    
     # Create an Exponential Moving Average Model
     ema_avg_fn = lambda averaged_model_parameter, model_parameter, num_averaged: \
         (1 - model_ema_decay) * averaged_model_parameter + model_ema_decay * model_parameter
     ema_g_src_to_dst_model = AveragedModel(g_src_to_dst_model, device=device, avg_fn=ema_avg_fn)
     ema_g_dst_to_src_model = AveragedModel(g_dst_to_src_model, device=device, avg_fn=ema_avg_fn)
 
-    d_src_model = d_src_model.to(device)
-    d_dst_model = d_dst_model.to(device)
-    g_src_to_dst_model = g_src_to_dst_model.to(device)
-    g_dst_to_src_model = g_dst_to_src_model.to(device)
     ema_g_src_to_dst_model = ema_g_src_to_dst_model.to(device)
     ema_g_dst_to_src_model = ema_g_dst_to_src_model.to(device)
 
@@ -381,8 +382,8 @@ def train(
         data_time.update(time.time() - end)
 
         # Transfer in-memory data to CUDA devices to speed up training
-        real_image_A = batch_data["src"].to(device, non_blocking=True)
-        real_image_B = batch_data["dst"].to(device, non_blocking=True)
+        real_image_A = batch_data["src"].to(device, non_blocking=True).float()
+        real_image_B = batch_data["dst"].to(device, non_blocking=True).float()
         identity_weight = torch.Tensor(config.identity_weight).to(device)
         adversarial_weight = torch.Tensor(config.adversarial_weight).to(device)
         cycle_weight = torch.Tensor(config.cycle_weight).to(device)
